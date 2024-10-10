@@ -1,0 +1,13 @@
+name = "Design_Project"
+uuid = "707e94a1-e123-4bcd-8cd7-1c2894903509"
+authors = ["MasterOfPies <zhenghan.ren@gmail.com> and contributors"]
+version = "1.0.0-DEV"
+
+[compat]
+julia = "1.6.7"
+
+[extras]
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+
+[targets]
+test = ["Test"]
