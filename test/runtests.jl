@@ -154,8 +154,6 @@ using Design_Project
     println("Closest achieved β value: ", closest_beta, " with ϕ = ", best_ϕ)
 
     # Finding the best value for second town
-    # Define a range of β values
-    beta_values = range(0.03, 0.04, length=20)
 
     # Change params and intial conditiosn for town 2
     # Fixed Parameters for the SIRS model (excluding β)
@@ -176,24 +174,54 @@ using Design_Project
     R0 = 0
     initial_conditions = [S0, I0, Is0, R0]
 
+    # Definition of variables
+    start_days = 0:30
+    best_start_day = start_days[1]
+    overall_min_error = Inf
+    overall_best_beta = 0 
+    best_beta_T2 = 0
+    errors_T2 = Inf
+    min_error_T2 = Inf
+    min_index_T2 = 0
+
+    # Iterate over each possible start day
+    for start_day in start_days
+    # Adjust the time span to start from the current start_day
+    tspan = (start_day, 80)
+
+    # Define a range of β values
+    beta_values = range(0.03, 0.06, length=20)
+
     # Compute errors for each β in the range for Town 2
     errors_T2 = [compute_error(β, params_fixed, initial_conditions, tspan, T2_days_infected, T2_infected_people) for β in beta_values]
+
+    # Find the β value that minimizes the error for Town 2
+    min_error_T2, min_index_T2 = findmin(errors_T2)
+    best_beta_T2 = beta_values[min_index_T2]
+
+    if min_error_T2 < overall_min_error
+        overall_min_error = min_error_T2
+        best_start_day = start_day
+        overall_best_beta = best_beta_T2
+    end
+
+    end
+
+    # Set the new tspan
+    tspan = (best_start_day, 80)
+    # Solve the model with the best β for Town 2
+    params_T2 = (c, overall_best_beta, γ, γ_s, ps, σ, ε, ϕ, intervention_day)
+    prob_T2 = ODEProblem(sirs_model!, initial_conditions, tspan, params_T2)
+    sol_T2 = solve(prob_T2)
 
     # Plot error as a function of β to identify optimal β for Town 2
     p_error_T2 = plot(beta_values, errors_T2, xlabel="β", ylabel="Error", 
                       title="Error vs β for Town 2", lw=2)
     display(p_error_T2)
 
-    # Find the β value that minimizes the error for Town 2
-    min_error_T2, min_index_T2 = findmin(errors_T2)
-    best_beta_T2 = beta_values[min_index_T2]
-    println("Best β value for Town 2: ", best_beta_T2, " with minimum error: ", min_error_T2)
-
-    # Solve the model with the best β for Town 2
-    params_T2 = (c, best_beta_T2, γ, γ_s, ps, σ, ε, ϕ, intervention_day)
-    prob_T2 = ODEProblem(sirs_model!, initial_conditions, tspan, params_T2)
-    sol_T2 = solve(prob_T2)
-
+    println("Best β value for Town 2: ", overall_best_beta, " with minimum error: ", min_error_T2)
+    println("Optimal start day for the model in Town 2: ", best_start_day)
+    
     # Plot the infected population for Town 2 using best β
     T2_Infected_Data_Plot = plot(sol_T2, vars=(2), label="Model - Infected", 
                                  xlabel="Days", ylabel="Population", title="Model vs Data for Town 2")
