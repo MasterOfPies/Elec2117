@@ -15,8 +15,8 @@ using Design_Project
     γ_s = 1/14                        # Recovery rate for severe cases
     ps = 0.2                          # Proportion of severe cases
     σ = 1/30                          # Resusceptibility rate
-    ε = 0                           # Intervention efficacy
-    ϕ = 0                           # Proportion that uses intervention
+    ε = 0.3                           # Intervention efficacy
+    ϕ = 0.8                           # Proportion that uses intervention
     intervention_day = 30             # Day intervention starts
     params_fixed = (c, γ, γ_s, ps, σ, ε, ϕ, intervention_day) # Tuple of fixed parameters
 
@@ -82,7 +82,7 @@ using Design_Project
 
     println("Best β value: ", best_beta, " with infected error: ", min_error, " with severely infected error: ", Severe_error)
 
-    # Solve the Model Again with the Best β
+    # Solve the model again with the best β
     β = best_beta
     params = (c, β, γ, γ_s, ps, σ, ε, ϕ, intervention_day)
     prob = ODEProblem(sirs_model!, initial_conditions, tspan, params)
@@ -96,17 +96,17 @@ using Design_Project
     T1_All_Data_Plot = scatter!(days_infected, infected_people, label="Infected People Data")
     display(T1_All_Data_Plot)
 
-    #Plot just the infected people
+    # Plot just the infected people
     T1_Infected_Data_Plot = plot(sol, vars=(2), label="Infected", xlabel="Days", ylabel="Population", title="SIRS Model - Infected", lw=2)
     T1_Infected_Data_Plot = scatter!(days_infected, infected_people, label="Infected People Data")
     display(T1_Infected_Data_Plot)
 
-    #Plot just the severely infected people
+    # Plot just the severely infected people
     T1_SInfected_Data_Plot = plot(sol, vars=(3), label="Severely Infected", xlabel="Days", ylabel="Population", title="SIRS Model - Severely Infected", lw=2)
     T1_SInfected_Data_Plot = scatter!(days_severe, Sinfected_people, label="Severely Infected People Data")
     display(T1_SInfected_Data_Plot)
 
-    # Extract the infected population (second variable in the solution)
+    # Extract the infected population
     infected_population = sol[2, :]
 
     # Find the maximum number of infected people
@@ -116,4 +116,38 @@ using Design_Project
     Sinfected_population = sol[3, :]
     Smax_infected = maximum(Sinfected_population)
     println("Maximum number of Severely infected people: ", Smax_infected)
+
+    # Finding the value of ϕ that closest aligns with a given β value
+    # Define the target β value we want to approach
+    target_beta = 0.03463
+
+    # Range of ϕ values to test
+    ϕ_values = range(0, 1, length=100)
+
+    # Variable to track the best ϕ and corresponding β value
+    best_ϕ = ϕ_values[1]
+    closest_beta = beta_values[1]
+    min_diff = abs(closest_beta - target_beta)
+
+    # Iterate over ϕ values
+    for ϕ in ϕ_values
+        # Update params with the new ϕ value
+        params_fixed = (c, γ, γ_s, ps, σ, ε, ϕ, intervention_day)
+
+        # Compute errors for each β in the range
+        errors = [compute_error(β, params_fixed, initial_conditions, tspan, days_infected, infected_people) for β in beta_values]
+
+    # Find the β value that minimizes the error for this ϕ
+    min_error, min_index = findmin(errors)
+    best_beta_for_ϕ = beta_values[min_index]
+    
+    # Check if it is the best β value
+    if abs(best_beta_for_ϕ - target_beta) < min_diff
+        best_ϕ = ϕ
+        closest_beta = best_beta_for_ϕ
+        min_diff = abs(best_beta_for_ϕ - target_beta)
+    end
+    end
+    println("Optimal ϕ value to achieve β ≈ 0.03463: ")
+    println("Closest achieved β value: ", closest_beta, " with ϕ = ", best_ϕ)
 end
