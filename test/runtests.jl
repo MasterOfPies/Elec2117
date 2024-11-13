@@ -151,6 +151,7 @@ using Design_Project
     println("Optimal β value: ", optimal_β)
     println("Optimal ϕ value: ", optimal_ϕ)
     println("Minimum error: ", min_error)
+    println("") # Empty line to seperate town 2 info
 
     # Finding the best value for second town
 
