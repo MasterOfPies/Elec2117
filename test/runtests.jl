@@ -80,29 +80,42 @@ using Design_Project
     # Compute error for the severely infected people
     severe_error = [compute_error_severe(best_beta, params_fixed, initial_conditions, tspan, days_severe, Sinfected_people)]
     severe_error_value = severe_error[1]
-    println("Best β value: ", best_beta, " with infected error: ", min_error, " with severely infected error: ", severe_error_value)
+    println("Best β value: ", round(best_beta, digits=3), " with infected error: ", round(min_error, digits=3), " with severely infected error: ", round(severe_error_value, digits=3))
+
+    # Finding percentage error
+    average = mean(infected_people)
+    percentage_error = (min_error/average)
+
+    average_severe = mean(Sinfected_people)
+    percentage_error_severe = (severe_error_value/average_severe)
+
+    overall_percentage_error = (percentage_error + percentage_error_severe)/2
+
+    println("Percentage Error: ", round(100 * overall_percentage_error, digits=3), "%")
+    println("β = ", round(best_beta, digits=3), " ± ", round(best_beta * (overall_percentage_error), digits=5))
+    println("")
 
     # Solve the model again with the best β
     β = best_beta
     params = (c, β, γ, γ_s, ps, σ, ε, ϕ, intervention_day)
     prob = ODEProblem(sirs_model!, initial_conditions, tspan, params)
     sol = solve(prob)
-    
+
     # Plot each variable using best beta
-    T1_All_Data_Plot = plot(sol, vars=(1), label="Susceptible", xlabel="Days", ylabel="Population", title="SIRS Model - Susceptible", lw=2)
-    T1_All_Data_Plot = plot!(sol, vars=(2), label="Infected", xlabel="Days", ylabel="Population", title="SIRS Model - Infected", lw=2)
-    T1_All_Data_Plot = plot!(sol, vars=(3), label="Severely Infected", xlabel="Days", ylabel="Population", title="SIRS Model - Severely Infected", lw=2)
-    T1_All_Data_Plot = plot!(sol, vars=(4), label="Recovered", xlabel="Days", ylabel="Population", title="SIRS Model - Recovered", lw=2)
+    T1_All_Data_Plot = plot(sol, idxs=(1), label="Susceptible", xlabel="Days", ylabel="Population", title="SIRS Model - Susceptible", lw=2)
+    T1_All_Data_Plot = plot!(sol, idxs=(2), label="Infected", xlabel="Days", ylabel="Population", title="SIRS Model - Infected", lw=2)
+    T1_All_Data_Plot = plot!(sol, idxs=(3), label="Severely Infected", xlabel="Days", ylabel="Population", title="SIRS Model - Severely Infected", lw=2)
+    T1_All_Data_Plot = plot!(sol, idxs=(4), label="Recovered", xlabel="Days", ylabel="Population", title="SIRS Model - Recovered", lw=2)
     T1_All_Data_Plot = scatter!(days_infected, infected_people, label="Infected People Data")
     display(T1_All_Data_Plot)
 
     # Plot just the infected people
-    T1_Infected_Data_Plot = plot(sol, vars=(2), label="Infected", xlabel="Days", ylabel="Population", title="SIRS Model - Infected", lw=2)
+    T1_Infected_Data_Plot = plot(sol, idxs=(2), label="Infected", xlabel="Days", ylabel="Population", title="SIRS Model - Infected β", lw=2)
     T1_Infected_Data_Plot = scatter!(days_infected, infected_people, label="Infected People Data")
     display(T1_Infected_Data_Plot)
 
     # Plot just the severely infected people
-    T1_SInfected_Data_Plot = plot(sol, vars=(3), label="Severely Infected", xlabel="Days", ylabel="Population", title="SIRS Model - Severely Infected", lw=2)
+    T1_SInfected_Data_Plot = plot(sol, idxs=(3), label="Severely Infected", xlabel="Days", ylabel="Population", title="SIRS Model - Severely Infected", lw=2)
     T1_SInfected_Data_Plot = scatter!(days_severe, Sinfected_people, label="Severely Infected People Data")
     display(T1_SInfected_Data_Plot)
 
@@ -111,13 +124,19 @@ using Design_Project
 
     # Find the maximum number of infected people
     max_infected = maximum(infected_population)
-    println("Maximum number of infected people: ", max_infected)
-
-    Sinfected_population = sol[3, :]
-    Smax_infected = maximum(Sinfected_population)
-    println("Maximum number of Severely infected people: ", Smax_infected)
+    println("Maximum number of infected people using best β value: ", round(max_infected, digits=3))
+    println("With an Error of ±", round(max_infected * overall_percentage_error, digits=3))
     println("")
-    # Assume that this is the best fixed β value
+
+    # Finds the max number of severley infected people and for other beta values
+    Sinfected_population = sol[3, :]
+
+    Smax_infected = maximum(Sinfected_population)
+    println("Maximum number of Severely infected people using best β value: ", round(Smax_infected, digits=3))
+    println("With an Error of ±", round(Smax_infected * overall_percentage_error, digits=3))
+    println("")
+
+    # Assume that this is the best β value
     best_best = β
 
     # Range of ϕ values to test
@@ -143,8 +162,8 @@ using Design_Project
     end
 
     # Print out the optimal ϕ value and the corresponding error
-    println("Optimal ϕ value: ", optimal_ϕ)
-    println("Minimum error with fixed β = ", best_beta, ": ", min_error)
+    println("Optimal ϕ value: ", round(optimal_ϕ, digits=3))
+    println("Minimum error with β = ", round(best_beta, digits=3), ": ", round(min_error, digits=3))
     println("")
 
     # Finding the best value for second town
@@ -184,7 +203,7 @@ using Design_Project
     tspan = (start_day, 80)
 
     # Define a range of β values
-    beta_values = range(0.03, 0.06, length=20)
+    beta_values = range(0.035, 0.045, length=100)
 
     # Compute errors for each β in the range for Town 2
     errors_T2 = [compute_error(β, params_fixed, initial_conditions, tspan, T2_days_infected, T2_infected_people) for β in beta_values]
@@ -213,18 +232,21 @@ using Design_Project
                       title="Error vs β for Town 2", lw=2)
     display(p_error_T2)
 
-    println("Best β value for Town 2: ", overall_best_beta, " with minimum error: ", min_error_T2)
+    println("Town 2")
+    println("Best β value for Town 2: ", round(overall_best_beta, digits=3), " with minimum error: ", round(overall_min_error, digits=3))
     println("Optimal start day for the model in Town 2: ", best_start_day)
     
     # Plot the infected population for Town 2 using best β
-    T2_Infected_Data_Plot = plot(sol_T2, vars=(2), label="Model - Infected", 
+    T2_Infected_Data_Plot = plot(sol_T2, idxs=(2), label="Model - Infected", 
                                  xlabel="Days", ylabel="Population", title="Model vs Data for Town 2")
     T2_Infected_Data_Plot = scatter!(T2_days_infected, T2_infected_people, label="Infected People Data")
     display(T2_Infected_Data_Plot)
 
     # Plot the severely infected population for Town 2 using the best β
-    T2_Severe_Infected_Data_Plot = plot(sol_T2, vars=(3), label="Model - Severely Infected", 
+    T2_Severe_Infected_Data_Plot = plot(sol_T2, idxs=(3), label="Model - Severely Infected", 
     xlabel="Days", ylabel="Population", title="Severely Infected: Model vs Data for Town 2")
     T2_Severe_Infected_Data_Plot = scatter!(T2_days_severe, T2_Sinfected_people, label="Severely Infected People Data")
     display(T2_Severe_Infected_Data_Plot)
+
+    println("")
 end
