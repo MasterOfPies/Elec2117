@@ -6,6 +6,7 @@ using Plots
 export sirs_model!
 export plot_model_vs_data
 export compute_error
+export compute_error_severe
 
 # Function defining the SIRS model differential equations with intervention
 function sirs_model!(dpop, pop, params, t)
@@ -54,9 +55,30 @@ function compute_error(β, params_fixed, initial_conditions, tspan, days, infect
 
     # Extract model predictions at the given days
     model_infected = sol(days_array)
-
-    # Compute total infected (I + Is) at each time point
     model_total_infected = model_infected[2, :]
+
+    # Compute the sum of squared errors between model predictions and data
+    summed = sum((model_total_infected - infected_people).^2)
+    error = sqrt(summed/length(days))
+    return error
+end
+
+function compute_error_severe(β, params_fixed, initial_conditions, tspan, days, infected_people)
+    # Unpack fixed parameters
+    c, γ, γ_s, ps, σ, ε, ϕ, intervention_day = params_fixed
+    # Complete parameter set with current β
+    params = (c, β, γ, γ_s, ps, σ, ε, ϕ, intervention_day)
+
+    # Solve the differential equations using an ODE solver
+    prob = ODEProblem(sirs_model!, initial_conditions, tspan, params)
+    sol = solve(prob)
+
+    # Ensure 'days' is treated as an array
+    days_array = collect(days)
+
+    # Extract model predictions at the given days
+    model_infected = sol(days_array)
+    model_total_infected = model_infected[3, :]
 
     # Compute the sum of squared errors between model predictions and data
     summed = sum((model_total_infected - infected_people).^2)

@@ -78,7 +78,7 @@ using Design_Project
     best_beta = beta_values[min_index]
 
     # Compute error for the severely infected people
-    severe_error = [compute_error(best_beta, params_fixed, initial_conditions, tspan, days_severe, Sinfected_people)]
+    severe_error = [compute_error_severe(best_beta, params_fixed, initial_conditions, tspan, days_severe, Sinfected_people)]
     severe_error_value = severe_error[1]
     println("Best β value: ", best_beta, " with infected error: ", min_error, " with severely infected error: ", severe_error_value)
 
@@ -116,42 +116,36 @@ using Design_Project
     Sinfected_population = sol[3, :]
     Smax_infected = maximum(Sinfected_population)
     println("Maximum number of Severely infected people: ", Smax_infected)
-
-    # Finding the value of ϕ that closest aligns with a given β value
-    # Define the target β value we want to approach
-    target_beta = 0.03463
+    println("")
+    # Assume that this is the best fixed β value
+    best_best = β
 
     # Range of ϕ values to test
-    ϕ_values = range(0, 1, length=100)
+    ϕ_values = range(0, 1, length=1000)
 
-    # Variable to track the best ϕ and corresponding β value
-    best_ϕ = ϕ_values[1]
-    closest_beta = beta_values[1]
-    min_diff = abs(closest_beta - target_beta)
+    # Variables to track the optimal ϕ and the minimum error
+    optimal_ϕ = 0
+    min_error = Inf
 
-    # Iterate over ϕ values
+    # Iterate over each ϕ value to find the one that minimizes the error
     for ϕ in ϕ_values
-        # Update params with the new ϕ value
+        # Update params with the fixed best_beta and current ϕ value
         params_fixed = (c, γ, γ_s, ps, σ, ε, ϕ, intervention_day)
 
-        # Compute errors for each β in the range
-        errors = [compute_error(β, params_fixed, initial_conditions, tspan, days_infected, infected_people) for β in beta_values]
+        # Compute the error for the current ϕ
+        error = compute_error(best_beta, params_fixed, initial_conditions, tspan, days_infected, infected_people)
 
-    # Find the β value that minimizes the error for this ϕ
-    min_error, min_index = findmin(errors)
-    best_beta_for_ϕ = beta_values[min_index]
-    
-    # Check if it is the best β value
-    if abs(best_beta_for_ϕ - target_beta) < min_diff
-        best_ϕ = ϕ
-        closest_beta = best_beta_for_ϕ
-        min_diff = abs(best_beta_for_ϕ - target_beta)
-    end
+        # Check if this ϕ produces a smaller error
+        if error < min_error
+            optimal_ϕ = ϕ
+            min_error = error
+        end
     end
 
-    # Print out the results
-    println("Optimal ϕ value to achieve β ≈ 0.03463: ")
-    println("Closest achieved β value: ", closest_beta, " with ϕ = ", best_ϕ)
+    # Print out the optimal ϕ value and the corresponding error
+    println("Optimal ϕ value: ", optimal_ϕ)
+    println("Minimum error with fixed β = ", best_beta, ": ", min_error)
+    println("")
 
     # Finding the best value for second town
 
