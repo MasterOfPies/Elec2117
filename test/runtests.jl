@@ -15,10 +15,10 @@ using Design_Project
     γ_s = 1/14                        # Recovery rate for severe cases
     ps = 0.2                          # Proportion of severe cases
     σ = 1/30                          # Resusceptibility rate
-    ε = 0.3                           # Intervention efficacy
+    ϵ = 0.3                           # Intervention efficacy
     ϕ = 0.8                           # Proportion that uses intervention
     intervention_day = 30             # Day intervention starts
-    params_fixed = (c, γ, γ_s, ps, σ, ε, ϕ, intervention_day) # Tuple of fixed parameters
+    params_fixed = (c, γ, γ_s, ps, σ, ϵ, ϕ, intervention_day) # Tuple of fixed parameters
 
     # Initial Conditions: S(0), I(0), Is(0), R(0)
     S0 = 5999
@@ -97,13 +97,13 @@ using Design_Project
 
     # Solve the model again with the best β
     β = best_beta
-    params = (c, β, γ, γ_s, ps, σ, ε, ϕ, intervention_day)
+    params = (c, β, γ, γ_s, ps, σ, ϵ, ϕ, intervention_day)
     prob = ODEProblem(sirs_model!, initial_conditions, tspan, params)
     sol = solve(prob)
 
     # Solve model again with no intervention
     β = best_beta
-    params = (c, β, γ, γ_s, ps, σ, ε, ϕ, Inf)
+    params = (c, β, γ, γ_s, ps, σ, ϵ, ϕ, Inf)
     prob_no_int = ODEProblem(sirs_model!, initial_conditions, tspan, params)
     sol_no_int = solve(prob_no_int)
 
@@ -170,7 +170,7 @@ using Design_Project
     # Iterate over each ϕ value to find the one that minimizes the error
     for ϕ in ϕ_values
         # Update params with the fixed best_beta and current ϕ value
-        params_fixed = (c, γ, γ_s, ps, σ, ε, ϕ, intervention_day)
+        params_fixed = (c, γ, γ_s, ps, σ, ϵ, ϕ, intervention_day)
 
         # Compute the error for the current ϕ
         error = compute_error(best_beta, params_fixed, initial_conditions, tspan, days_infected, infected_people)
@@ -203,10 +203,10 @@ using Design_Project
     γ_s = 1/14                        # Recovery rate for severe cases
     ps = 0.2                          # Proportion of severe cases
     σ = 1/30                          # Resusceptibility rate
-    ε = 0.3                           # Intervention efficacy
+    ϵ = 0.3                           # Intervention efficacy
     ϕ = 0.8                           # Proportion that uses intervention
     intervention_day = 36             # Day intervention starts
-    params_fixed = (c, γ, γ_s, ps, σ, ε, ϕ, intervention_day) # Tuple of fixed parameters
+    params_fixed = (c, γ, γ_s, ps, σ, ϵ, ϕ, intervention_day) # Tuple of fixed parameters
 
     # Initial Conditions: S(0), I(0), Is(0), R(0)
     S0 = 9999
@@ -271,7 +271,7 @@ using Design_Project
     tspan = (best_start_day, 80)
 
     # Solve the model with the best β for Town 2
-    params_T2 = (c, overall_best_beta, γ, γ_s, ps, σ, ε, ϕ, intervention_day)
+    params_T2 = (c, overall_best_beta, γ, γ_s, ps, σ, ϵ, ϕ, intervention_day)
     prob_T2 = ODEProblem(sirs_model!, initial_conditions, tspan, params_T2)
     sol_T2 = solve(prob_T2)
     errors_T2 = [compute_error(β, params_fixed, initial_conditions, tspan, T2_days_infected, T2_infected_people) for β in beta_values]
